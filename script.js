@@ -836,7 +836,7 @@
       `and the whole becomes far less mysterious. A full assistant response would now ` +
       `walk through each part with examples pitched at your level.`,
     creative: (t) =>
-      `A first sketch for ${t}: some ideas arrive like weather — sudden, bright, ` +
+      `A first sketch for ${t}: some ideas arrive like weather, sudden and bright and ` +
       `impossible to ignore. This one waited quietly while the tokens aligned, then ` +
       `stepped onto the page. A full response would carry on in this voice, shaped by ` +
       `the form and tone you asked for.`,
@@ -858,7 +858,7 @@
     general: (t) =>
       `Here's the shape of an answer to “${t}”: understand what's really being asked, ` +
       `gather only the context that matters, and reply in the clearest form available. ` +
-      `A full assistant response would follow exactly that path — this demonstration ` +
+      `A full assistant response would follow exactly that path. This demonstration ` +
       `stops at showing you how.`,
   };
 
