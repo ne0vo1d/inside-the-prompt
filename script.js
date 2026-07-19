@@ -804,10 +804,12 @@
      fixed category template. No network, no storage, no analytics. */
   const CATEGORY_RULES = [
     ["creative", /\b(poems?|haiku|stor(y|ies)|songs?|lyrics?|fiction|novel|tale|verse|rap|sonnet|screenplay|creative writing)\b/],
+    // explanation outranks code so "What is an API?" reads as a question,
+    // not a build task; build-intent prompts don't match the question shapes
+    ["explanation", /\b(explain|what (is|are|was|were)|how (does|do|did|is|are)|why (is|are|do|does|did)|teach|understand(ing)?|difference between|meaning of|definition)\b/],
     ["code", /\b(code|coding|python|javascript|typescript|java|c\+\+|rust|sql|api|function|script|program(me)?|algorithm|debug|regex|website|app|software)\b/],
     ["business", /\b(startup|business|market(ing)?|revenue|pitch|monetis|monetiz|compan(y|ies)|saas|strateg(y|ies)|invest(or|ment)?|business plan|product launch)\b/],
     ["visual", /\b(logo|ui|ux|poster|brand(ing)?|layout|palette|typography|icon|mockup|wireframe|colour scheme|color scheme|visual design|graphic)\b/],
-    ["explanation", /\b(explain|what (is|are|was|were)|how (does|do|did|is|are)|why (is|are|do|does|did)|teach|understand(ing)?|difference between|meaning of|definition)\b/],
   ];
 
   function classifyPrompt(prompt) {
@@ -829,29 +831,31 @@
     return t;
   }
 
+  /* Topics are always quoted: user text lands mid-sentence, so without
+     quotes its capitalisation reads as a typo ("For What is an api, …"). */
   const RESPONSE_TEMPLATES = {
     explanation: (t) =>
-      `Here's a way into ${t}: start with what it does, then how it does it. ` +
+      `Here's a way into “${t}”: start with what it does, then how it does it. ` +
       `Break the idea into its smallest moving parts, understand each one on its own, ` +
       `and the whole becomes far less mysterious. A full assistant response would now ` +
       `walk through each part with examples pitched at your level.`,
     creative: (t) =>
-      `A first sketch for ${t}: some ideas arrive like weather, sudden and bright and ` +
+      `A first sketch for “${t}”: some ideas arrive like weather, sudden and bright and ` +
       `impossible to ignore. This one waited quietly while the tokens aligned, then ` +
       `stepped onto the page. A full response would carry on in this voice, shaped by ` +
       `the form and tone you asked for.`,
     code: (t) =>
-      `For ${t}, a real answer would sketch the approach before the syntax: define ` +
+      `For “${t}”, a real answer would sketch the approach before the syntax: define ` +
       `the interface, name the edge cases, then write the smallest version that works. ` +
       `Clear naming and a test beat clever tricks. The full response would include ` +
       `runnable code, commented where intent isn't obvious.`,
     business: (t) =>
-      `For ${t}, the outline builds in stages: the problem worth solving, the people ` +
+      `For “${t}”, the outline builds in stages: the problem worth solving, the people ` +
       `who have it, the smallest product that helps them, and how it earns. A complete ` +
       `answer would pressure-test each assumption and end with the first three concrete ` +
       `steps to take this week.`,
     visual: (t) =>
-      `For ${t}, good design starts with subtraction: one clear focal point, generous ` +
+      `For “${t}”, good design starts with subtraction: one clear focal point, generous ` +
       `space, and a palette with restraint. Hierarchy should guide the eye before any ` +
       `decoration earns its place. A full response would propose specific layouts, type ` +
       `and colour choices you could apply immediately.`,
