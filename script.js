@@ -362,23 +362,26 @@
         ctx.stroke();
       }
 
-      // the prompt pulse accelerating into the distance
-      const pulseT = (time * 0.45) % 1.6;
+      // the prompt pulse accelerating into the distance: small and brief so
+      // it never washes out the copy sitting at the vanishing point
+      const pulseT = (time * 0.45) % 2.4;
       if (pulseT < 1) {
         const eased = 1 - Math.pow(1 - pulseT, 3);
-        const r = 26 * (1 - eased) + 3;
-        const px = cx, py = cy + (h * 0.28) * (1 - eased);
-        const glow = ctx.createRadialGradient(px, py, 0, px, py, r * 5);
-        glow.addColorStop(0, "rgba(52, 211, 153, 0.85)");
-        glow.addColorStop(0.4, "rgba(52, 211, 153, 0.25)");
+        const scale = Math.min(1, Math.min(w, h) / 900);
+        const fade = 1 - eased;                       // gone by the centre
+        const r = (14 * (1 - eased) + 2) * scale;
+        const px = cx, py = cy + (h * 0.34) * (1 - eased);
+        const glow = ctx.createRadialGradient(px, py, 0, px, py, r * 4);
+        glow.addColorStop(0, `rgba(52, 211, 153, ${(0.5 * fade).toFixed(3)})`);
+        glow.addColorStop(0.4, `rgba(52, 211, 153, ${(0.15 * fade).toFixed(3)})`);
         glow.addColorStop(1, "rgba(52, 211, 153, 0)");
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(px, py, r * 5, 0, Math.PI * 2);
+        ctx.arc(px, py, r * 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
         ctx.arc(px, py, r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(240, 253, 250, 0.95)";
+        ctx.fillStyle = `rgba(240, 253, 250, ${(0.9 * fade).toFixed(3)})`;
         ctx.fill();
       }
 
@@ -873,6 +876,14 @@
 
   let responseText = "";   // set when the journey starts
 
+  /* Scene 9 streams only the opening of the response and leaves the caret
+     blinking (generation in progress); Scene 10 holds the finished answer.
+     Without this the two scenes repeat the same text back to back. */
+  function excerptOf(text) {
+    const sentences = text.match(/[^.!?]+[.!?]+(?:\s+|$)/g) || [text];
+    return sentences.slice(0, 2).join("").trimEnd() + " ";
+  }
+
   controllers.generation = (() => {
     const out = $("#stream-text");
     let timers = [], done = false;
@@ -885,7 +896,7 @@
       const caret = document.createElement("span");
       caret.className = "stream-caret";
       out.appendChild(caret);
-      const tokens = responseText.split(/(?<=\s)/);   // keep trailing spaces
+      const tokens = excerptOf(responseText).split(/(?<=\s)/);   // keep trailing spaces
       let delay = 300;
       tokens.forEach((tok, i) => {
         delay += rand(45, 130);
@@ -894,17 +905,14 @@
           span.className = "tok";
           span.textContent = tok;
           out.insertBefore(span, caret);
-          if (i === tokens.length - 1) {
-            done = true;
-            setTimeout(() => caret.remove(), 1500);
-          }
+          if (i === tokens.length - 1) done = true;   // caret keeps blinking
         }, delay));
       });
     }
 
     return {
       enter() {
-        if (reduceMotion) { out.textContent = responseText; done = true; return; }
+        if (reduceMotion) { out.textContent = excerptOf(responseText) + "…"; done = true; return; }
         stream();
       },
       leave() {
