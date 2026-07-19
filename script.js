@@ -718,7 +718,7 @@
       el.innerHTML = `<div class="scanline" aria-hidden="true"></div>
         <span class="safety-name">${name}</span>
         <span class="safety-sub">${sub}</span>
-        <span class="safety-check" aria-hidden="true">✓ passed</span>`;
+        <span class="safety-check" aria-hidden="true">check complete</span>`;
       track.insertBefore(el, pulse);
       return el;
     });

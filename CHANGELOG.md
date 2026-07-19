@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] — 2026-07-19
+
+### Added
+- `Content-Security-Policy` meta tag (self-only sources, no objects, no
+  form targets) and a `<noscript>` fallback message.
+
+### Changed
+- Viewport declaration now includes `viewport-fit=cover` so the journey
+  controller's safe-area inset works as intended on modern iPhones.
+- Safety scene copy now attributes safeguards to deployed applications
+  rather than the model itself: "Deployed AI applications may apply
+  safeguards before, during and after generation — screening prompts,
+  checking tool results and validating outputs." The per-layer
+  "✓ passed" state is now a less binary "check complete".
+- The prompt input allows sentence capitalisation and spell-checking
+  (autocomplete remains off).
+
 ## [1.1.0] — 2026-07-19
 
 ### Added
