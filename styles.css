@@ -7,7 +7,7 @@
   --bg: #090909;
   --ink: #f5f5f4;
   --ink-dim: rgba(245, 245, 244, 0.62);
-  --ink-faint: rgba(245, 245, 244, 0.38);
+  --ink-faint: rgba(245, 245, 244, 0.52);
   --emerald: #34d399;
   --emerald-deep: #10b981;
   --purple: #a78bfa;
@@ -637,15 +637,11 @@ body.journey-on .landing {
   filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.9));
 }
 .scene.active #branch-svg .branch.keep {
-  animation: draw 2.6s var(--ease) forwards, keep-glow 3s ease 3s infinite alternate;
-  animation-delay: var(--d, 0s), 3s;
+  animation: draw 2.6s var(--ease) forwards;
+  animation-delay: var(--d, 0s);
 }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes branch-fade { to { stroke: rgba(167, 139, 250, 0.05); } }
-@keyframes keep-glow {
-  from { filter: drop-shadow(0 0 4px rgba(52, 211, 153, 0.6)); }
-  to   { filter: drop-shadow(0 0 12px rgba(52, 211, 153, 1)); }
-}
 #branch-svg .origin {
   fill: var(--ink);
   filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.9));
