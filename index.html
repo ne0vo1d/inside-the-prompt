@@ -37,12 +37,14 @@
   <div class="landing-inner">
     <label class="prompt-line" for="prompt-input">
       <span class="chevron" aria-hidden="true">&gt;</span>
-      <span class="prompt-text">
-        <span id="typed"></span><span id="ghost" aria-hidden="true"></span><span id="caret" class="caret" aria-hidden="true"></span>
+      <span class="prompt-text" id="prompt-text">
+        <input id="prompt-input" type="text" autocomplete="off" autocapitalize="off"
+               spellcheck="false" aria-label="Type a prompt and press Enter" maxlength="140">
+        <span class="prompt-idle" id="prompt-idle" aria-hidden="true">
+          <span id="ghost"></span><span id="caret" class="caret"></span>
+        </span>
       </span>
     </label>
-    <input id="prompt-input" type="text" autocomplete="off" autocapitalize="off"
-           spellcheck="false" aria-label="Type a prompt and press Enter" maxlength="140">
     <p class="landing-hint" id="landing-hint">Type anything. Press <kbd>Enter</kbd>.</p>
   </div>
 </header>
@@ -137,13 +139,13 @@
     </div>
   </section>
 
-  <!-- Scene 8 · Reasoning -->
-  <section class="scene" id="s-branches" data-scene="branches" aria-label="Scene 8: Reasoning">
+  <!-- Scene 8 · Inference and Selection -->
+  <section class="scene" id="s-branches" data-scene="branches" aria-label="Scene 8: Inference and selection">
     <svg id="branch-svg" class="scene-canvas" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
     <div class="scene-copy">
-      <p class="eyebrow">08 · Reasoning</p>
+      <p class="eyebrow">08 · Inference and selection</p>
       <h2 class="scene-title">Many paths, <span class="grad-text">one answer</span></h2>
-      <p class="caption">“Modern AI evaluates many possible continuations before generating each response.”</p>
+      <p class="caption">“At each step, the model scores possible continuations and selects what comes next.”</p>
       <p class="body-copy footnote">A conceptual visualisation — not a literal picture of any
         model’s internal process.</p>
     </div>
@@ -158,6 +160,7 @@
     <div class="stream-panel glass">
       <div class="stream-dot" aria-hidden="true"></div>
       <p id="stream-text" class="stream-text" aria-live="off"></p>
+      <p class="demo-note">Illustrative response — generated locally for this demonstration.</p>
     </div>
   </section>
 
@@ -170,17 +173,33 @@
       </div>
       <div class="chat-row ai">
         <p id="chat-answer"></p>
+        <p class="demo-note">Illustrative response — generated locally for this demonstration.</p>
       </div>
     </div>
     <div class="finale" id="finale">
       <p class="finale-line">Every prompt begins a journey.</p>
-      <p class="finale-line finale-sub">Every answer is the result of understanding, planning,
-        context, safety and generation working together.</p>
+      <p class="finale-line finale-sub">Every response begins with tokens and inference.
+        Depending on the request, context, tools, planning and safeguards may also shape the result.</p>
       <button id="replay" class="replay-btn" type="button">Begin again</button>
     </div>
   </section>
 
 </main>
+
+<!-- Journey controller -->
+<nav id="jc" class="journey-controller glass" role="group" aria-label="Journey controls" hidden>
+  <span id="jc-scene" class="jc-scene">Scene <span id="jc-num" aria-live="polite">1 / 10</span></span>
+  <button id="jc-pause" class="jc-btn" type="button" aria-pressed="false" aria-label="Pause animations">
+    <svg class="ic-pause" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><rect x="3" y="2" width="4" height="12" rx="1"/><rect x="9" y="2" width="4" height="12" rx="1"/></svg>
+    <svg class="ic-play" viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4 2.5v11a1 1 0 0 0 1.53.85l8.5-5.5a1 1 0 0 0 0-1.7l-8.5-5.5A1 1 0 0 0 4 2.5Z"/></svg>
+  </button>
+  <button id="jc-next" class="jc-btn" type="button" aria-label="Skip to next scene">
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v11M3.5 8.5 8 13l4.5-4.5"/></svg>
+  </button>
+  <button id="jc-restart" class="jc-btn" type="button" aria-label="Restart the journey">
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9M4 1.5v3h3"/></svg>
+  </button>
+</nav>
 
 <!-- ──────────────────────── Footer ──────────────────────── -->
 <footer id="site-footer" hidden>

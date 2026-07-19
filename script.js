@@ -89,10 +89,17 @@
       raf = requestAnimationFrame(loop);
     }
 
+    function start() {
+      if (!reduceMotion && !raf) raf = requestAnimationFrame(loop);
+    }
+    function stop() {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+    }
+
     window.addEventListener("resize", resize, { passive: true });
     resize();
-    if (!reduceMotion) raf = requestAnimationFrame(loop);
-    return { resize };
+    start();
+    return { resize, start, stop };
   })();
 
   /* ══════════════════════════════════════════════════════════
@@ -100,7 +107,7 @@
      ══════════════════════════════════════════════════════════ */
   const landing = (() => {
     const input = $("#prompt-input");
-    const typed = $("#typed");
+    const promptText = $("#prompt-text");
     const ghost = $("#ghost");
     const PLACEHOLDERS = [
       "Write a poem...",
@@ -146,16 +153,14 @@
       phTimer = setTimeout(tickPlaceholder, 900);
     }
 
-    function focusInput() {
-      if (!journeyStarted) input.focus({ preventScroll: true });
+    // Focus once on load for keyboard users; never trap focus afterwards.
+    // (Touch devices skip this so the keyboard doesn't pop unprompted.)
+    if (window.matchMedia("(hover: hover)").matches) {
+      input.focus({ preventScroll: true });
     }
-    document.addEventListener("pointerdown", focusInput);
-    document.addEventListener("keydown", focusInput);
-    focusInput();
 
     input.addEventListener("input", () => {
-      typed.textContent = input.value;
-      ghost.textContent = input.value.length ? "" : ghost.textContent;
+      promptText.classList.toggle("typing", input.value.length > 0);
     });
 
     input.addEventListener("keydown", (e) => {
@@ -175,9 +180,33 @@
      Scene framework — activation + per-scene controllers
      ══════════════════════════════════════════════════════════ */
   const controllers = {};   // sceneName -> { enter(), leave() }
+  let sceneEls = [];        // populated once the journey starts
+  let currentScene = 0;     // index into sceneEls
+  const visibleScenes = new Set();   // data-scene names currently on screen
+
+  /* pause state: user toggle OR hidden browser tab stops every JS loop */
+  let userPaused = false;
+  let tabHidden = document.visibilityState === "hidden";
+  const isPaused = () => userPaused || tabHidden;
+
+  function applyPauseState() {
+    document.body.classList.toggle("anim-paused", userPaused);
+    if (isPaused()) {
+      stars.stop();
+      for (const name of visibleScenes) controllers[name]?.leave?.();
+    } else {
+      stars.start();
+      for (const name of visibleScenes) controllers[name]?.enter?.();
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    tabHidden = document.visibilityState === "hidden";
+    applyPauseState();
+  });
 
   function setupObserver() {
-    const scenes = $$(".scene");
+    sceneEls = $$(".scene");
     const revealIO = new IntersectionObserver((entries) => {
       for (const en of entries) {
         if (en.isIntersecting) en.target.classList.add("active");
@@ -187,35 +216,61 @@
     const runIO = new IntersectionObserver((entries) => {
       for (const en of entries) {
         const name = en.target.dataset.scene;
-        const ctrl = controllers[name];
-        if (!ctrl) continue;
-        if (en.isIntersecting) ctrl.enter && ctrl.enter();
-        else ctrl.leave && ctrl.leave();
+        if (en.isIntersecting) {
+          visibleScenes.add(name);
+          if (!isPaused()) controllers[name]?.enter?.();
+        } else {
+          visibleScenes.delete(name);
+          controllers[name]?.leave?.();
+        }
       }
     }, { threshold: 0.25 });
 
-    scenes.forEach((s) => { revealIO.observe(s); runIO.observe(s); });
+    sceneEls.forEach((s) => { revealIO.observe(s); runIO.observe(s); });
 
     // dot navigation
     const dots = $("#dots");
     dots.hidden = false;
-    const links = scenes.map((s, i) => {
+    const links = sceneEls.map((s, i) => {
       const a = document.createElement("a");
       a.href = `#${s.id}`;
       a.setAttribute("aria-label", s.getAttribute("aria-label") || `Scene ${i + 1}`);
       dots.appendChild(a);
       return a;
     });
+    const jcNum = $("#jc-num");
     const dotIO = new IntersectionObserver((entries) => {
       for (const en of entries) {
-        const idx = scenes.indexOf(en.target);
+        const idx = sceneEls.indexOf(en.target);
         if (en.isIntersecting) {
+          currentScene = idx;
           links.forEach((l, i) => l.classList.toggle("on", i === idx));
+          jcNum.textContent = `${idx + 1} / ${sceneEls.length}`;
         }
       }
     }, { threshold: 0.55 });
-    scenes.forEach((s) => dotIO.observe(s));
+    sceneEls.forEach((s) => dotIO.observe(s));
   }
+
+  /* journey controller buttons */
+  (() => {
+    const pauseBtn = $("#jc-pause");
+    pauseBtn.addEventListener("click", () => {
+      userPaused = !userPaused;
+      pauseBtn.setAttribute("aria-pressed", String(userPaused));
+      pauseBtn.setAttribute("aria-label", userPaused ? "Resume animations" : "Pause animations");
+      applyPauseState();
+    });
+    $("#jc-next").addEventListener("click", () => {
+      const next = sceneEls[Math.min(currentScene + 1, sceneEls.length - 1)];
+      next?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    });
+    $("#jc-restart").addEventListener("click", () => {
+      if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+      window.scrollTo(0, 0);
+      window.location.reload();
+    });
+  })();
 
   /* progress bar */
   (() => {
@@ -602,24 +657,44 @@
     ["🌐", "Search"], ["🖼️", "Images"], ["📅", "Calendar"], ["✉️", "Email"],
   ];
   const TOOL_ITEMS = [
-    ["🌍", "Search"], ["🧮", "Python"], ["🖼️", "Images"],
+    ["🤖", "Model only"], ["🌍", "Search"], ["🧮", "Python"], ["🖼️", "Images"],
     ["📄", "Documents"], ["📅", "Calendar"], ["✉️", "Email"],
   ];
 
+  /* Routing heuristics. Deliberately conservative: a capability only
+     activates when the prompt clearly calls for it; otherwise the model
+     answers from the conversation alone. */
+  const ROUTES = {
+    search: /\b(latest|news|today|current(ly)?|recent(ly)?|this (week|month|year)|research|look up|search|find out|who won|what happened|price of|weather|stock|release date)\b/,
+    files: /\b(files?|documents?|pdf|docx?|spreadsheet|csv|upload(ed|s)?|attach(ed|ment|ments)?)\b/,
+    memory: /\b(remember|earlier|last (time|week|month)|previous(ly)?|we (discussed|talked about)|as i (said|mentioned)|my (name|preferences|usual|project)|again)\b/,
+    python: /\b(code|coding|python|javascript|typescript|sql|api|function|script|program(me)?|algorithm|debug|regex|calculate|computation|data analysis|statistics)\b/,
+    images: /\b(images?|pictures?|photos?|draw(ing)?|illustrat(e|ion)|logo|diagram|render|sketch)\b/,
+    calendar: /\b(calendar|schedule|meeting|appointment|remind(er)?s?|book (a|an|my))\b/,
+    email: /\b(emails?|e-mail|inbox|reply to|send (a |an )?(message|mail))\b/,
+  };
+
   function relevantSources(prompt) {
     const p = prompt.toLowerCase();
-    const ctx = new Set(["Conversation", "Memory"]);
+    // Context: conversation is always in play; everything else must be earned.
+    const ctx = new Set(["Conversation"]);
+    if (ROUTES.memory.test(p)) ctx.add("Memory");
+    if (ROUTES.search.test(p)) ctx.add("Search");
+    if (ROUTES.files.test(p)) ctx.add("Uploaded Files");
+    if (ROUTES.images.test(p)) ctx.add("Images");
+    if (ROUTES.calendar.test(p)) ctx.add("Calendar");
+    if (ROUTES.email.test(p)) ctx.add("Email");
+
+    // Tools: none by default — most prompts are answered by the model alone.
     const tools = new Set();
-    if (/(search|news|latest|today|find|research|who|what|where|when)/.test(p)) {
-      ctx.add("Search"); tools.add("Search");
-    }
-    if (/(code|python|api|build|calculate|math|data|script|program)/.test(p)) tools.add("Python");
-    if (/(image|picture|photo|design|draw|logo|art)/.test(p)) { ctx.add("Images"); tools.add("Images"); }
-    if (/(file|document|pdf|report|upload|write|poem|essay)/.test(p)) tools.add("Documents");
-    if (/(calendar|schedule|meeting|plan my|remind)/.test(p)) { ctx.add("Calendar"); tools.add("Calendar"); }
-    if (/(email|mail|message|send)/.test(p)) { ctx.add("Email"); tools.add("Email"); }
-    if (tools.size === 0) { tools.add("Search"); tools.add("Documents"); }
-    if (ctx.size === 2) ctx.add("Search");
+    if (ROUTES.search.test(p)) tools.add("Search");
+    if (ROUTES.python.test(p)) tools.add("Python");
+    if (ROUTES.images.test(p)) tools.add("Images");
+    if (ROUTES.files.test(p)) tools.add("Documents");
+    if (ROUTES.calendar.test(p)) tools.add("Calendar");
+    if (ROUTES.email.test(p)) tools.add("Email");
+    if (tools.size === 0) tools.add("Model only");
+
     return { ctx: [...ctx], tools: [...tools] };
   }
 
@@ -724,11 +799,75 @@
   /* ══════════════════════════════════════════════════════════
      Scene 9 — token-by-token generation
      ══════════════════════════════════════════════════════════ */
-  const RESPONSE_TEXT =
-    "Your words became tokens. The tokens activated meaning. Meaning became a plan — " +
-    "grounded in the right context, screened by quiet guardrails, and chosen from many " +
-    "possible continuations. Everything you just watched happens in moments, every time " +
-    "you press Enter. This is how a prompt becomes an answer.";
+  /* Local, deterministic response generation. Nothing leaves the page:
+     the prompt is classified with fixed keyword rules and rendered into a
+     fixed category template. No network, no storage, no analytics. */
+  const CATEGORY_RULES = [
+    ["creative", /\b(poems?|haiku|stor(y|ies)|songs?|lyrics?|fiction|novel|tale|verse|rap|sonnet|screenplay|creative writing)\b/],
+    ["code", /\b(code|coding|python|javascript|typescript|java|c\+\+|rust|sql|api|function|script|program(me)?|algorithm|debug|regex|website|app|software)\b/],
+    ["business", /\b(startup|business|market(ing)?|revenue|pitch|monetis|monetiz|compan(y|ies)|saas|strateg(y|ies)|invest(or|ment)?|business plan|product launch)\b/],
+    ["visual", /\b(logo|ui|ux|poster|brand(ing)?|layout|palette|typography|icon|mockup|wireframe|colour scheme|color scheme|visual design|graphic)\b/],
+    ["explanation", /\b(explain|what (is|are|was|were)|how (does|do|did|is|are)|why (is|are|do|does|did)|teach|understand(ing)?|difference between|meaning of|definition)\b/],
+  ];
+
+  function classifyPrompt(prompt) {
+    const p = prompt.toLowerCase();
+    for (const [category, re] of CATEGORY_RULES) {
+      if (re.test(p)) return category;
+    }
+    return "general";
+  }
+
+  function extractTopic(prompt) {
+    let t = prompt.trim().replace(/[.?!…]+$/, "");
+    t = t.replace(
+      /^(please\s+)?(can|could|would|will)?\s*(you\s+)?(help me\s+)?(write|create|build|make|design|draft|generate|plan|compose|develop|explain|describe|teach me( about)?|tell me( about)?|show me|give me)\s+(me\s+)?(a|an|the|some)?\s*/i,
+      "");
+    t = t.trim();
+    if (t.length < 3) t = prompt.trim();
+    if (t.length > 70) t = t.slice(0, 67).trimEnd() + "…";
+    return t;
+  }
+
+  const RESPONSE_TEMPLATES = {
+    explanation: (t) =>
+      `Here's a way into ${t}: start with what it does, then how it does it. ` +
+      `Break the idea into its smallest moving parts, understand each one on its own, ` +
+      `and the whole becomes far less mysterious. A full assistant response would now ` +
+      `walk through each part with examples pitched at your level.`,
+    creative: (t) =>
+      `A first sketch for ${t}: some ideas arrive like weather — sudden, bright, ` +
+      `impossible to ignore. This one waited quietly while the tokens aligned, then ` +
+      `stepped onto the page. A full response would carry on in this voice, shaped by ` +
+      `the form and tone you asked for.`,
+    code: (t) =>
+      `For ${t}, a real answer would sketch the approach before the syntax: define ` +
+      `the interface, name the edge cases, then write the smallest version that works. ` +
+      `Clear naming and a test beat clever tricks. The full response would include ` +
+      `runnable code, commented where intent isn't obvious.`,
+    business: (t) =>
+      `For ${t}, the outline builds in stages: the problem worth solving, the people ` +
+      `who have it, the smallest product that helps them, and how it earns. A complete ` +
+      `answer would pressure-test each assumption and end with the first three concrete ` +
+      `steps to take this week.`,
+    visual: (t) =>
+      `For ${t}, good design starts with subtraction: one clear focal point, generous ` +
+      `space, and a palette with restraint. Hierarchy should guide the eye before any ` +
+      `decoration earns its place. A full response would propose specific layouts, type ` +
+      `and colour choices you could apply immediately.`,
+    general: (t) =>
+      `Here's the shape of an answer to “${t}”: understand what's really being asked, ` +
+      `gather only the context that matters, and reply in the clearest form available. ` +
+      `A full assistant response would follow exactly that path — this demonstration ` +
+      `stops at showing you how.`,
+  };
+
+  function buildResponse(prompt) {
+    const category = classifyPrompt(prompt);
+    return RESPONSE_TEMPLATES[category](extractTopic(prompt));
+  }
+
+  let responseText = "";   // set when the journey starts
 
   controllers.generation = (() => {
     const out = $("#stream-text");
@@ -742,7 +881,7 @@
       const caret = document.createElement("span");
       caret.className = "stream-caret";
       out.appendChild(caret);
-      const tokens = RESPONSE_TEXT.split(/(?<=\s)/);   // keep trailing spaces
+      const tokens = responseText.split(/(?<=\s)/);   // keep trailing spaces
       let delay = 300;
       tokens.forEach((tok, i) => {
         delay += rand(45, 130);
@@ -761,7 +900,7 @@
 
     return {
       enter() {
-        if (reduceMotion) { out.textContent = RESPONSE_TEXT; done = true; return; }
+        if (reduceMotion) { out.textContent = responseText; done = true; return; }
         stream();
       },
       leave() {
@@ -775,7 +914,7 @@
      ══════════════════════════════════════════════════════════ */
   function buildCompletion(prompt) {
     $("#chat-prompt").textContent = prompt;
-    $("#chat-answer").textContent = RESPONSE_TEXT;
+    $("#chat-answer").textContent = responseText;
   }
 
   $("#replay").addEventListener("click", () => {
@@ -792,6 +931,7 @@
     userPrompt = prompt;
     landing.stop();
 
+    responseText = buildResponse(prompt);
     $("#arrival-prompt").textContent = `“${prompt}”`;
     buildTokens(prompt);
     const rel = relevantSources(prompt);
@@ -801,6 +941,7 @@
 
     $("#journey").hidden = false;
     $("#site-footer").hidden = false;
+    $("#jc").hidden = false;
     document.body.classList.add("journey-on");
     setupObserver();
 
