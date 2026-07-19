@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="description" content="Inside the Prompt — an interactive visualisation of what happens between pressing Enter and receiving an AI-generated response.">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#090909">
@@ -23,6 +25,12 @@
 </head>
 <body>
 
+<noscript>
+  <p class="noscript-message">
+    Inside the Prompt requires JavaScript to run its interactive visualisation.
+  </p>
+</noscript>
+
 <!-- Ambient particle field (whole journey) -->
 <canvas id="stars" aria-hidden="true"></canvas>
 
@@ -38,8 +46,8 @@
     <label class="prompt-line" for="prompt-input">
       <span class="chevron" aria-hidden="true">&gt;</span>
       <span class="prompt-text" id="prompt-text">
-        <input id="prompt-input" type="text" autocomplete="off" autocapitalize="off"
-               spellcheck="false" aria-label="Type a prompt and press Enter" maxlength="140">
+        <input id="prompt-input" type="text" autocomplete="off" autocapitalize="sentences"
+               spellcheck="true" aria-label="Type a prompt and press Enter" maxlength="140">
         <span class="prompt-idle" id="prompt-idle" aria-hidden="true">
           <span id="ghost"></span><span id="caret" class="caret"></span>
         </span>
@@ -131,8 +139,8 @@
     <div class="scene-copy scene-copy-top">
       <p class="eyebrow">07 · Safety</p>
       <h2 class="scene-title">Quiet <span class="grad-text">guardrails</span></h2>
-      <p class="body-copy">Before and during generation, layered checks help keep responses
-        safe, grounded and reliable — working silently in the background.</p>
+      <p class="body-copy">Deployed AI applications may apply safeguards before, during and
+        after generation — screening prompts, checking tool results and validating outputs.</p>
     </div>
     <div class="safety-track" id="safety-track" aria-hidden="true">
       <div class="safety-pulse" id="safety-pulse"></div>
