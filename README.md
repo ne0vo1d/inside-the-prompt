@@ -13,9 +13,16 @@ ten-scene journey:
 5. **Context** — only the relevant context sources illuminate
 6. **Tool Selection** — only the required tools activate
 7. **Safety** — the prompt passes through transparent guardrail layers
-8. **Reasoning** — many candidate continuations fade to one bright path
-9. **Generation** — the answer streams in, one token at a time
+8. **Inference and selection** — many candidate continuations fade to one bright path
+9. **Generation** — a short illustrative response streams in, one token at a time
 10. **Completion** — back to the chat, answer waiting
+
+The streamed response is relevant to what you typed: prompts are classified
+locally into explanation, creative writing, code, business planning, visual
+design or a general fallback, each with its own illustrative reply. Nothing
+you type is transmitted, stored or measured — there is no network call and
+no analytics. A persistent controller lets you pause animations, skip
+between scenes or restart at any time.
 
 Built to educate developers, students and anyone curious about AI — a museum
 exhibit, not a marketing page.
@@ -36,7 +43,14 @@ npx serve .
 - Canvas particle field + fibre tunnel, generated SVG for the neural network,
   pipeline connectors and branching paths
 - Scene animations are driven by `IntersectionObserver` and only run while
-  visible; canvas loops pause off-screen
+  visible; canvas loops pause off-screen, when the tab is hidden, and under
+  reduced motion
 - Respects `prefers-reduced-motion` (static frames, instant text, no loops)
 - Responsive from mobile to desktop; the prompt's content shapes the token
-  cloud, context sources and tool selection
+  cloud, context sources, tool selection and the illustrative response
+
+## Contributing & licence
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines and
+[SECURITY.md](SECURITY.md) for reporting vulnerabilities. Released under the
+[MIT License](LICENSE). Changes are tracked in [CHANGELOG.md](CHANGELOG.md).

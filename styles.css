@@ -143,13 +143,41 @@ body.journey-on .landing {
   user-select: none;
 }
 
-.prompt-text { position: relative; word-break: break-word; }
+.prompt-text {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
 
-#typed { color: var(--ink); }
+#prompt-input {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  caret-color: var(--emerald);
+}
+/* while the field is empty, the idle overlay (ghost text + block cursor)
+   plays the caret's role, so the native caret stays invisible */
+.prompt-text:not(.typing) #prompt-input { caret-color: transparent; }
+
+.prompt-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.prompt-text.typing .prompt-idle { display: none; }
 #ghost { color: var(--ink-faint); }
 
 .caret {
   display: inline-block;
+  flex: none;
   width: 0.55em;
   height: 1.15em;
   margin-left: 2px;
@@ -159,13 +187,6 @@ body.journey-on .landing {
   animation: blink 1.05s steps(1) infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
-
-#prompt-input {
-  position: absolute;
-  opacity: 0;
-  width: 1px; height: 1px;
-  pointer-events: none;
-}
 
 .landing-hint {
   margin-top: 2.2rem;
@@ -688,6 +709,15 @@ body.journey-on .landing {
   animation: blink 0.9s steps(1) infinite;
 }
 
+.demo-note {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+.chat-row.ai .demo-note { margin-top: 12px; }
+
 /* ── Scene 10: completion ────────────────────────────────── */
 
 #s-completion { gap: clamp(30px, 5vh, 54px); }
@@ -760,6 +790,76 @@ body.journey-on .landing {
   box-shadow: 0 0 26px rgba(52, 211, 153, 0.25);
   transform: translateY(-2px);
   outline: none;
+}
+
+/* ── Journey controller ──────────────────────────────────── */
+
+.journey-controller {
+  position: fixed;
+  left: 18px;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px 6px 14px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+body.journey-on .journey-controller {
+  opacity: 1;
+  transform: none;
+}
+
+.jc-scene {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.jc-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: color 0.3s, background 0.3s;
+}
+.jc-btn:hover { color: var(--emerald); background: rgba(52, 211, 153, 0.08); }
+.jc-btn:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 2px;
+  color: var(--emerald);
+}
+
+#jc-pause .ic-play { display: none; }
+body.anim-paused #jc-pause .ic-pause { display: none; }
+body.anim-paused #jc-pause .ic-play { display: block; }
+body.anim-paused #jc-pause { color: var(--emerald); }
+
+/* pause every CSS animation while paused (transitions still settle) */
+body.anim-paused *,
+body.anim-paused *::before,
+body.anim-paused *::after {
+  animation-play-state: paused !important;
+}
+
+@media (max-width: 760px) {
+  .journey-controller {
+    left: 50%;
+    transform: translate(-50%, 12px);
+  }
+  body.journey-on .journey-controller { transform: translate(-50%, 0); }
+  .scroll-cue { display: none; }   /* the controller occupies this space */
 }
 
 /* ── Footer ──────────────────────────────────────────────── */
