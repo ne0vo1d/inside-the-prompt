@@ -755,7 +755,7 @@ body.journey-on .landing {
   margin-bottom: 16px;
   word-break: break-word;
 }
-.chat-row.ai p { font-size: 0.98rem; color: var(--ink); }
+#chat-answer { font-size: 0.98rem; color: var(--ink); }
 
 .finale {
   z-index: 1;
@@ -872,6 +872,9 @@ body.anim-paused *::after {
   }
   body.journey-on .journey-controller { transform: translate(-50%, 0); }
   .scroll-cue { display: none; }   /* the controller occupies this space */
+  /* keep the finale and footer clear of the floating controller */
+  #s-completion { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
+  #site-footer { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ── Footer ──────────────────────────────────────────────── */
