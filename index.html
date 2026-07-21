@@ -177,14 +177,16 @@
     <div class="scene-copy scene-copy-top">
       <p class="eyebrow">10 · Completion</p>
     </div>
-    <div class="chat glass" id="chat">
+    <div class="chat" id="chat">
       <div class="chat-row user">
-        <span class="chevron">&gt;</span>
-        <span id="chat-prompt"></span>
+        <span class="chat-bubble user-bubble" id="chat-prompt"></span>
       </div>
       <div class="chat-row ai">
-        <p id="chat-answer"></p>
-        <p class="demo-note">Illustrative response, generated locally for this demonstration.</p>
+        <span class="chat-avatar" aria-hidden="true">✨</span>
+        <div class="chat-bubble ai-bubble">
+          <p id="chat-answer"></p>
+          <p class="demo-note">Illustrative response, generated locally for this demonstration.</p>
+        </div>
       </div>
     </div>
     <div class="finale" id="finale">

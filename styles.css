@@ -734,9 +734,13 @@ body.journey-on .landing {
 
 #s-completion { gap: clamp(30px, 5vh, 54px); }
 
+/* Scene 10 deliberately drops the terminal look: the journey ends back in
+   a familiar chat interface, visually distinct from Scene 9's stream panel */
 .chat {
   width: min(620px, 92vw);
-  padding: 26px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   z-index: 1;
   opacity: 0;
   transform: translateY(28px) scale(0.97);
@@ -744,16 +748,42 @@ body.journey-on .landing {
 }
 .scene.active .chat { opacity: 1; transform: none; }
 
-.chat-row.user {
-  display: flex;
-  gap: 0.6em;
-  font-family: var(--mono);
-  font-size: 0.95rem;
-  color: var(--ink-dim);
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--glass-border);
-  margin-bottom: 16px;
+.chat-row { display: flex; }
+.chat-row.user { justify-content: flex-end; }
+.chat-row.ai { align-items: flex-start; gap: 10px; }
+
+.chat-bubble {
   word-break: break-word;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.user-bubble {
+  max-width: 80%;
+  padding: 11px 16px;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  border-radius: 18px 18px 4px 18px;
+}
+.ai-bubble {
+  max-width: 85%;
+  padding: 14px 18px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px 18px 18px 18px;
+}
+.chat-avatar {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  border-radius: 50%;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
 }
 #chat-answer { font-size: 0.98rem; color: var(--ink); }
 
